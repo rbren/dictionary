@@ -1,0 +1,63 @@
+package info.bbrennan.dictionary;
+
+import com.google.common.base.Splitter;
+
+import java.util.List;
+
+import net.didion.jwnl.JWNL;
+import net.didion.jwnl.JWNLException;
+import net.didion.jwnl.data.IndexWord;
+import net.didion.jwnl.data.POS;
+import net.didion.jwnl.data.PointerType;
+import net.didion.jwnl.data.PointerUtils;
+import net.didion.jwnl.data.Synset;
+import net.didion.jwnl.data.Word;
+import net.didion.jwnl.data.list.PointerTargetNodeList;
+import net.didion.jwnl.data.list.PointerTargetTree;
+import net.didion.jwnl.data.relationship.AsymmetricRelationship;
+import net.didion.jwnl.data.relationship.Relationship;
+import net.didion.jwnl.data.relationship.RelationshipFinder;
+import net.didion.jwnl.data.relationship.RelationshipList;
+import net.didion.jwnl.dictionary.Dictionary;
+
+public class JWNLUtils {
+  private JWNLUtils() {}
+
+  public static Iterable<String> getWordsFromSynsetDefinition(Synset synset) {
+    String gloss = synset.getGloss();
+    int idx = gloss.indexOf(";");
+    String defn = idx < 0 ? gloss : gloss.substring(0, idx);
+    return Splitter.on(' ').split(defn);
+  }
+
+  public static class SynsetPointer {
+    public long loc;
+    public POS pos;
+
+    public SynsetPointer(Synset synset) {
+      pos = synset.getPOS();
+      loc = synset.getOffset();
+    }
+
+    public Synset get() throws JWNLException {
+      return Dictionary.getInstance().getSynsetAt(pos, loc);
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      if (!(obj instanceof SynsetPointer)) {
+        return false;
+      }
+      SynsetPointer other = (SynsetPointer) obj;
+      return other.pos.equals(pos) && other.loc == loc;
+    }
+  }
+
+  public static class DefinitionPointer {
+    public Iterable<String> dependencies;
+
+    public DefinitionPointer(Synset synset) {
+      dependencies = getWordsFromSynsetDefinition(synset);
+    }
+  }
+}
