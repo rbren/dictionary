@@ -48,6 +48,7 @@ public class AcyclicDictionary {
 
   private Set<Synset> mDefinedSynsets = new HashSet<Synset>();
   private List<SynsetCount> mSynsetCounts = new ArrayList<SynsetCount>(117659);
+  private List<StringCount> mStringCounts = new ArrayList<StringCount>(100000);
 
   public static void main(String[] args) {
     System.out.println("Running Dict");
@@ -105,22 +106,24 @@ public class AcyclicDictionary {
     Iterator iter = Dictionary.getInstance().getSynsetIterator(pos);
     while (iter.hasNext()) {
       final Synset synset = (Synset) iter.next();
-      /*
-      if (((int) (Math.random() * 100.0)) != 0) {
-        System.out.print("c");
-        continue;
-      }
-      */
       new Thread(new Runnable() {
         @Override
         public void run() {
           DefinitionPointer def = new DefinitionPointer(synset);
           System.out.print(".");
           for (String word : def.dependencies) {
+            StringCount count = new StringCount(word);
+            if (!mWordCounts.contains(count)) {
+              count.increment();
+              mWordCounts.add(count);
+            } else {
+              mWordCounts.get(mWordCounts.indexOf(count)).increment();
+            }
             try {
-              addCountsForWord(word);
+              //addCountsForWord(word);
+
             } catch (JWNLException e) {
-              
+
             }
           }
         }
@@ -152,48 +155,6 @@ public class AcyclicDictionary {
       ++i;
       if (i == 20) {break;}
       System.out.println("set:" + synCount.count + ":" + synCount.synset.get().getGloss());
-    }
-  }
-
-  private class SynsetCount {
-    public final SynsetPointer synset;
-    public int count;
-
-    public SynsetCount(Synset synset) {
-      this.synset = new SynsetPointer(synset);
-      this.count = 0;
-    }
-
-    public void increment() {
-      ++count;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-      return other instanceof SynsetCount && ((SynsetCount) other).synset.equals(synset);
-    }
-  }
-
-  private static class SynsetCountComparator implements Comparator<SynsetCount> {
-    @Override
-    public int compare(SynsetCount first, SynsetCount second) {
-      return second.count - first.count;
-    }
-  }
-
-  private static class SynsetLocComparator implements Comparator<SynsetCount> {
-    @Override
-    public int compare(SynsetCount first, SynsetCount second) {
-      int firstPos = POS_TYPES.indexOf(first.synset.pos);
-      int secondPos = POS_TYPES.indexOf(second.synset.pos);
-      if (firstPos != secondPos) {
-        return firstPos - secondPos;
-      }
-
-      if (second.synset.loc == first.synset.loc) {
-        return 0;
-      }
-      return second.synset.loc > first.synset.loc ? 1 : -1;
     }
   }
 }

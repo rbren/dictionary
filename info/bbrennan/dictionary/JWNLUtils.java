@@ -60,4 +60,71 @@ public class JWNLUtils {
       dependencies = getWordsFromSynsetDefinition(synset);
     }
   }
+
+  public static class StringCount {
+    public final String str;
+    public int count = 0;
+
+    public StringCount(String str) {
+      this.str = str;
+    }
+
+    public void increment() {
+      ++count;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      return other instanceof StringCount && ((StringCount) other).str.equals(synset);
+    }
+  }
+
+  private class SynsetCount {
+    public final SynsetPointer synset;
+    public int count;
+
+    public SynsetCount(Synset synset) {
+      this.synset = new SynsetPointer(synset);
+      this.count = 0;
+    }
+
+    public void increment() {
+      ++count;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+      return other instanceof SynsetCount && ((SynsetCount) other).synset.equals(synset);
+    }
+  }
+
+  private static class SynsetCountComparator implements Comparator<SynsetCount> {
+    @Override
+    public int compare(SynsetCount first, SynsetCount second) {
+      return second.count - first.count;
+    }
+  }
+
+  private static class StringCountComparator implements Comparator<StringCount> {
+    @Override
+    public int compare(StringCount first, StringCount second) {
+      return second.count - first.count;
+    }
+  }
+
+  private static class SynsetLocComparator implements Comparator<SynsetCount> {
+    @Override
+    public int compare(SynsetCount first, SynsetCount second) {
+      int firstPos = POS_TYPES.indexOf(first.synset.pos);
+      int secondPos = POS_TYPES.indexOf(second.synset.pos);
+      if (firstPos != secondPos) {
+        return firstPos - secondPos;
+      }
+
+      if (second.synset.loc == first.synset.loc) {
+        return 0;
+      }
+      return second.synset.loc > first.synset.loc ? 1 : -1;
+    }
+  }
 }
